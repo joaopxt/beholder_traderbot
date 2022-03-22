@@ -1,7 +1,7 @@
 function getSettings(req, res, next) {
 
     res.json({
-        email: 'joao@gmail.com'
+        email: 'joao.peixoto@bfcsa.com.br'
     })
 }
 
