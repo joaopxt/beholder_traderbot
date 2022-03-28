@@ -1,8 +1,16 @@
-function getSettings(req, res, next) {
+const settingsRepository = require("../repositories/settingsRepository");
 
-    res.json({
-        email: 'joao.peixoto@bfcsa.com.br'
-    })
+async function getSettings(req, res, next) {
+  const id = res.locals.token.id;
+  const settings = await settingsRepository.getSettings(id);
+  res.json(settings);
 }
 
-module.exports = { getSettings }
+async function updateSettings(req, res, next) {
+  const id = res.locals.token.id;
+  const newSettings = req.body;
+  settingsRepository.updateSettings(id, newSettings);
+  res.sendStatus(200);
+}
+
+module.exports = { getSettings, updateSettings };
