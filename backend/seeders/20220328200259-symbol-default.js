@@ -16,6 +16,7 @@ module.exports = {
           minNotional: "0.1",
           minLotSize: "0.1",
           isFavorit: true,
+          //eu sei que escrevi errado, mas percebi tarde demais
           createdAt: new Date(),
           updatedAt: new Date(),
         },

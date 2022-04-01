@@ -24,6 +24,7 @@ const symbolModel = database.define("symbol", {
     allowNull: false,
   },
   isFavorit: {
+    //sim, continuará errado
     type: Sequelize.BOOLEAN,
     defaultValue: false,
     allowNull: false,

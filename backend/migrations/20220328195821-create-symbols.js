@@ -25,6 +25,7 @@ module.exports = {
         allowNull: false,
       },
       isFavorit: {
+        //o que custava eu ter escrito certo
         type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: false,
