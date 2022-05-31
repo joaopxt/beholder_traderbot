@@ -1,8 +1,8 @@
 import React from "react";
-import SideBarItem from "../../components/menu/SideBarItem";
 
 /**
- *props:
+ * props.onClick
+ *props.data:
  * - symbol
  * - quote precision
  * - minNotional
@@ -38,6 +38,9 @@ function SymbolRow(props) {
           id={"edit" + props.data.symbol}
           className="btn btn-secondary animate-up-2"
           width={32}
+          data-bs-toggle="modal"
+          data-bs-target="#modalSymbol"
+          onClick={props.onClick}
         >
           <svg
             id={"edit" + props.data.symbol}
@@ -46,6 +49,7 @@ function SymbolRow(props) {
             stroke="currentColor"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
+            onClick={props.onClick}
           >
             <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
             <path

@@ -9,6 +9,7 @@ function Settings() {
   const inputNewPassword = useRef("");
   const inputConfirmPassword = useRef("");
   const inputApiUrl = useRef("");
+  const inputStreamUrl = useRef("");
   const inputAccessKey = useRef("");
   const inputSecretKey = useRef("");
 
@@ -24,6 +25,7 @@ function Settings() {
       .then((settings) => {
         inputEmail.current.value = settings.email;
         inputApiUrl.current.value = settings.apiUrl;
+        inputStreamUrl.current.value = settings.streamUrl;
         inputAccessKey.current.value = settings.accessKey;
       })
       .catch((err) => {
@@ -56,6 +58,7 @@ function Settings() {
           ? inputNewPassword.current.value
           : null,
         apiUrl: inputApiUrl.current.value,
+        streamUrl: inputStreamUrl.current.value,
         accessKey: inputAccessKey.current.value,
         secretKey: inputSecretKey.current.value
           ? inputSecretKey.current.value
@@ -146,6 +149,21 @@ function Settings() {
                         id="apiUrl"
                         type="text"
                         placeholder="Enter your API URL"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-sm-12 mb-3">
+                    <div className="form-group">
+                      <label htmlFor="streamUrl">STREAM URL</label>
+                      <input
+                        ref={inputStreamUrl}
+                        className="form-control"
+                        id="streamUrl"
+                        type="text"
+                        placeholder="Enter your STREAM URL"
+                        required
                       />
                     </div>
                   </div>

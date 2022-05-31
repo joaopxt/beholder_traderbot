@@ -2,28 +2,27 @@ import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { getSymbols, syncSymbols } from "../../services/SymbolsService";
 import SymbolRow from "./SymbolRow";
+import SelectQuote, {
+  getDefaultQuote,
+  filterSymbolObjects,
+  setDefaultQuote,
+} from "../../components/SelectQuote/SelectQuote";
+import SymbolModal from "./SymbolModal";
 
 function Symbols() {
-  const history = useHistory;
+  const history = useHistory();
   const [symbols, setSymbols] = useState([]);
   const [error, setError] = useState("");
+  const [quote, setQuote] = useState(getDefaultQuote());
   const [success, setSuccess] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    getSymbols(token)
-      .then((symbols) => {
-        setSymbols(symbols);
-      })
-      .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err.message);
-        setError(err.message);
-        setSuccess("");
-      });
-  }, [isSyncing]);
+  const [editSymbol, setEditSymbol] = useState({
+    symbol: "",
+    basePrecision: 0,
+    quotePrecision: 0,
+    minLotSize: "",
+    minNotional: "",
+  });
 
   function onSyncClick(event) {
     const token = localStorage.getItem("token");
@@ -39,6 +38,40 @@ function Symbols() {
       });
   }
 
+  function onQuoteChange(event) {
+    setQuote(event.target.value);
+    setDefaultQuote(event.target.value);
+  }
+
+  function loadSymbols() {
+    const token = localStorage.getItem("token");
+    getSymbols(token)
+      .then((symbols) => {
+        setSymbols(filterSymbolObjects(symbols, quote));
+      })
+      .catch((err) => {
+        if (err.response && err.response.status === 401)
+          return history.push("/");
+        console.error(err.message);
+        setError(err.message);
+        setSuccess("");
+      });
+  }
+
+  useEffect(() => {
+    loadSymbols(quote);
+  }, [isSyncing, quote]);
+
+  function onEditSymbol(event) {
+    const symbol = event.target.id.replace("edit", "");
+    const symbolObj = symbols.find((s) => s.symbol === symbol);
+    setEditSymbol(symbolObj);
+  }
+
+  function onModalSubmit(event) {
+    loadSymbols(event.target.value);
+  }
+
   return (
     <React.Fragment>
       <div className="row">
@@ -49,6 +82,9 @@ function Symbols() {
                 <div className="row align-items-center">
                   <div className="col">
                     <h2 className="fs-5 fw-bold mb-0">Symbols</h2>
+                  </div>
+                  <div className="col">
+                    <SelectQuote onChange={onQuoteChange} />
                   </div>
                 </div>
               </div>
@@ -76,7 +112,11 @@ function Symbols() {
                   </thead>
                   <tbody>
                     {symbols.map((item) => (
-                      <SymbolRow key={item.symbol} data={item} />
+                      <SymbolRow
+                        key={item.symbol}
+                        data={item}
+                        onClick={onEditSymbol}
+                      />
                     ))}
                   </tbody>
                   <tfoot>
@@ -123,6 +163,7 @@ function Symbols() {
           </div>
         </div>
       </div>
+      <SymbolModal data={editSymbol} onSubmit={onModalSubmit} />
     </React.Fragment>
   );
 }
