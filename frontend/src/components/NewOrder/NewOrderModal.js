@@ -84,8 +84,7 @@ function NewOrderModal(props) {
               <div className="row">
                 <label>You have:</label>
               </div>
-              {JSON.stringify(wallet)}
-              <WalletSummary /*wallet={props.wallet}*/ symbol={symbol} />
+              <WalletSummary wallet={props.wallet} symbol={symbol} />
               <div className="row">
                 <div className="col-md-6 mb-3"></div>
                 <div className="col-md-6 mb-3"></div>
