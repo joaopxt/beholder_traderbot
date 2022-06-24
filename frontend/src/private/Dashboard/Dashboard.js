@@ -1,15 +1,25 @@
 import React, { useState } from "react";
 import useWebSocket from "react-use-websocket";
 import Menu from "../../components/menu/Menu";
-import LineChart from "./LineChart";
 import MiniTicker from "./MiniTicker/MiniTicker";
 import BookTicker from "./BookTicker/BookTicker";
 import Wallet from "./Wallet/Wallet";
+import CandleChart from "./CandleChart";
+import NewOrderButton from "../../components/NewOrder/NewOrderButton";
+import NewOrderModal from "../../components/NewOrder/NewOrderModal";
 
 function Dashboard() {
   const [miniTickerState, setMiniTickerState] = useState({});
 
   const [bookState, setBookState] = useState({});
+
+  const [balanceState, setBalanceState] = useState({});
+
+  const [wallet, setWallet] = useState({});
+
+  function onWalletUpdate(walletObj) {
+    setWallet(walletObj);
+  }
 
   const { lastJsonMessage } = useWebSocket(process.env.REACT_APP_WS_URL, {
     onOpen: () => console.log("Connected to APP WS Server"),
@@ -20,10 +30,11 @@ function Dashboard() {
         if (lastJsonMessage.book) {
           lastJsonMessage.book.forEach((b) => (bookState[b.symbol] = b));
           setBookState(bookState);
+          if (lastJsonMessage.balance) setBalanceState(lastJsonMessage.balance);
         }
       }
     },
-    queryParams: {},
+    queryParams: { token: localStorage.getItem("token") },
     onError: (err) => console.error(err),
     shouldReconnect: (closeEvent) => true,
     reconnectInterval: 3000,
@@ -37,14 +48,19 @@ function Dashboard() {
           <div className="d-block mb-4 mb-md-0">
             <h1 className="h4">Dashboard</h1>
           </div>
+          <div className="mb-4">
+            <NewOrderButton />
+          </div>
         </div>
-        <LineChart />
+        <CandleChart symbol="BTCUSD" />
         <MiniTicker data={miniTickerState} />
         <div className="row">
           <BookTicker data={bookState} />
-          <Wallet />
+          <Wallet data={balanceState} onUpdate={onWalletUpdate} />
         </div>
       </main>
+      {JSON.stringify(wallet)}
+      <NewOrderModal wallet={wallet} />
     </React.Fragment>
   );
 }

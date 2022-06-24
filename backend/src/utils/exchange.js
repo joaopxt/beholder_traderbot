@@ -34,7 +34,7 @@ module.exports = (settings) => {
   }
 
   function userDataStream(
-    bakabceCallback,
+    balanceCallback,
     executionCallback,
     listStatusCallback
   ) {

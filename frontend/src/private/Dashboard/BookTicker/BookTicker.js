@@ -76,8 +76,6 @@ function BookTicker(props) {
           </div>
         </div>
       </div>
-
-      {`${JSON.stringify(props.data)}`}
     </React.Fragment>
   );
 }

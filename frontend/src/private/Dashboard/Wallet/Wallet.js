@@ -6,6 +6,7 @@ import "../Dashboard.css";
 /**
  * props:
  * - data
+ * - onUpdate
  */
 
 function Wallet(props) {
@@ -14,11 +15,12 @@ function Wallet(props) {
   const history = useHistory();
   const [balances, setBalances] = useState([]);
 
-  useEffect(() => {
+  function getBalanceCall() {
     const token = localStorage.getItem("token");
+
     getBalance(token)
       .then((info) => {
-        Object.entries(info).map((item) => {
+        const balances = Object.entries(info).map((item) => {
           return {
             symbol: item[0],
             available: item[1].available,
@@ -26,16 +28,68 @@ function Wallet(props) {
           };
         });
 
-        setBalances([info]);
+        if (props.onUpdate) props.onUpdate(balances);
+        console.log(props);
+
+        setBalances(balances);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err);
+        console.error(err.response ? err.response.data : err.message);
       });
-  }, []);
+  }
 
-  return <React.Fragment>{JSON.stringify(balances)}</React.Fragment>;
+  useEffect(() => {
+    getBalanceCall();
+    const intervalId = setInterval(() => {
+      getBalanceCall();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [props.data]);
+
+  return (
+    <div className="col-md-6 col-sm-12 mb-4">
+      <div className="card border-0 shadow">
+        <div className="card-header">
+          <div className="row">
+            <div className="col">
+              <h2 className="fs-5 fw-bold mb-0">Wallet</h2>
+            </div>
+          </div>
+        </div>
+        <div className="table-responsive divScroll">
+          <table className="table align-items-center table-flush table-sm table-hover tableFixHead">
+            <thead className="thead-light">
+              <tr>
+                <th className="border-bottom" scope="col">
+                  SYMBOL
+                </th>
+                <th className="border-bottom" scope="col">
+                  FREE
+                </th>
+                <th className="border-bottom" scope="col">
+                  LOCK
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {balances.map((item) => (
+                <tr key={`wallet${item.symbol}`}>
+                  <td className="text-gray-900">{item.symbol}</td>
+                  <td className="text-gray-900">
+                    {item.available.substring(0, 8)}
+                  </td>
+                  <td className="text-gray-900">
+                    {item.onOrder.substring(0, 8)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default Wallet;
