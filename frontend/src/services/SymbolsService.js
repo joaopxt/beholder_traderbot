@@ -1,39 +1,40 @@
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL;
+const SYMBOLS_URL = `${process.env.REACT_APP_API_URL}/symbols/`;
 
 export async function getSymbols(token) {
-  const symbolsUrl = `${API_URL}/symbols`;
-  const headers = {
-    authorization: token,
-  };
-  const response = await axios.get(symbolsUrl, { headers });
+  const headers = { authorization: token };
+  const response = await axios.get(SYMBOLS_URL, { headers });
+  return response.data;
+}
+
+export async function searchSymbols(search, onlyFavorites, page, token) {
+  const headers = { authorization: token };
+  const response = await axios.get(
+    `${SYMBOLS_URL}?search=${search}&onlyFavorites=${onlyFavorites}&page=${page}`,
+    { headers }
+  );
   return response.data;
 }
 
 export async function getSymbol(symbol, token) {
-  const symbolsUrl = `${API_URL}/symbols/${symbol.symbol}`;
-  const headers = {
-    authorization: token,
-  };
-  const response = await axios.get(symbolsUrl, { headers });
+  const headers = { authorization: token };
+  const response = await axios.get(`${SYMBOLS_URL}${symbol}`, { headers });
   return response.data;
 }
 
-export async function updateSymbol(symbol, token) {
-  const symbolsUrl = `${API_URL}/symbols/${symbol.symbol}`;
-  const headers = {
-    authorization: token,
-  };
-  const response = await axios.patch(symbolsUrl, symbol, { headers });
+export async function updateSymbol(symbolData, token) {
+  const headers = { authorization: token };
+  const response = await axios.patch(
+    `${SYMBOLS_URL}${symbolData.symbol}`,
+    symbolData,
+    { headers }
+  );
   return response.data;
 }
 
 export async function syncSymbols(token) {
-  const symbolsUrl = `${API_URL}/symbols/sync`;
-  const headers = {
-    authorization: token,
-  };
-  const response = await axios.post(symbolsUrl, {}, { headers });
+  const headers = { authorization: token };
+  const response = await axios.post(`${SYMBOLS_URL}sync`, {}, { headers });
   return response.data;
 }

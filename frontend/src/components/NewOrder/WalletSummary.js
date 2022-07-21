@@ -30,14 +30,14 @@ function WalletSummary(props) {
   const walletSummary = useMemo(
     () => (
       <div className="row">
-        <div className="col-md-6">
+        <div className="col-md-6 mb-3">
           <div className="form-group">
             <div className="alert alert-success py-1">{getBaseAsset()}</div>
           </div>
         </div>
-        <div className="col-md-6">
+        <div className="col-md-6 mb-3">
           <div className="form-group">
-            <div className="alert alert-success py-1">{getQuoteAsset()}</div>
+            <div className="alert alert-info py-1">{getQuoteAsset()}</div>
           </div>
         </div>
       </div>

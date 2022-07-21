@@ -1,21 +1,35 @@
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { getSymbols, syncSymbols } from "../../services/SymbolsService";
+import { useHistory, useLocation } from "react-router-dom";
+import { searchSymbols, syncSymbols } from "../../services/SymbolsService";
 import SymbolRow from "./SymbolRow";
 import SelectQuote, {
   getDefaultQuote,
-  filterSymbolObjects,
   setDefaultQuote,
 } from "../../components/SelectQuote/SelectQuote";
 import SymbolModal from "./SymbolModal";
+import Pagination from "../../components/Pagination/Pagination";
 
 function Symbols() {
   const history = useHistory();
+
+  const defaultLocation = useLocation();
+  function getPage(location) {
+    if (!location) location = defaultLocation;
+    return new URLSearchParams(location.search).get("page") || 1;
+  }
+  useEffect(() => {
+    return history.listen((location) => {
+      setPage(getPage(location));
+    });
+  }, [history]);
+
+  const [page, setPage] = useState(getPage());
   const [symbols, setSymbols] = useState([]);
   const [error, setError] = useState("");
   const [quote, setQuote] = useState(getDefaultQuote());
   const [success, setSuccess] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [count, setCount] = useState(0);
   const [editSymbol, setEditSymbol] = useState({
     symbol: "",
     basePrecision: 0,
@@ -43,11 +57,14 @@ function Symbols() {
     setDefaultQuote(event.target.value);
   }
 
-  function loadSymbols() {
+  function loadSymbols(selectedValue) {
     const token = localStorage.getItem("token");
-    getSymbols(token)
-      .then((symbols) => {
-        setSymbols(filterSymbolObjects(symbols, quote));
+    const search = selectedValue === "FAVORITES" ? "" : selectedValue;
+    const onlyFavorites = selectedValue === "FAVORITES";
+    searchSymbols(search, onlyFavorites, getPage(), token)
+      .then((result) => {
+        setSymbols(result.rows);
+        setCount(result.count);
       })
       .catch((err) => {
         if (err.response && err.response.status === 401)
@@ -60,7 +77,7 @@ function Symbols() {
 
   useEffect(() => {
     loadSymbols(quote);
-  }, [isSyncing, quote]);
+  }, [isSyncing, quote, page]);
 
   function onEditSymbol(event) {
     const symbol = event.target.id.replace("edit", "");
@@ -119,45 +136,46 @@ function Symbols() {
                       />
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan="2">
-                        <button
-                          className="btn btn-primary animate-up-2"
-                          type="button"
-                          onClick={onSyncClick}
-                        >
-                          <svg
-                            className="icon icon-xs"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {isSyncing ? "Syncing..." : "Sync"}
-                        </button>
-                      </td>
-                      <td>
-                        {error ? (
-                          <div className="alert alert-danger">{error}</div>
-                        ) : (
-                          <React.Fragment></React.Fragment>
-                        )}
-                        {error ? (
-                          <div className="alert alert-success">{success}</div>
-                        ) : (
-                          <React.Fragment></React.Fragment>
-                        )}
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
+                <Pagination count={count} />
+                <div className="card-footer">
+                  <div className="row">
+                    <div className="col">
+                      <button
+                        className="btn btn-primary animate-up-2"
+                        type="button"
+                        onClick={onSyncClick}
+                      >
+                        <svg
+                          className="icon icon-xs"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        {isSyncing ? "Syncing..." : "Sync"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="col">
+                    {error ? (
+                      <div className="alert alert-danger">{error}</div>
+                    ) : (
+                      <React.Fragment></React.Fragment>
+                    )}
+                    {error ? (
+                      <div className="alert alert-success">{success}</div>
+                    ) : (
+                      <React.Fragment></React.Fragment>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

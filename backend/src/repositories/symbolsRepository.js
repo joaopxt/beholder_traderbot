@@ -1,7 +1,27 @@
 const symbolModel = require("../models/symbolModel");
+const Sequelize = require("sequelize");
 
 function getSymbols() {
   return symbolModel.findAll();
+}
+
+function searchSymbols(search, onlyFavorites = false, page = 1) {
+  const options = {
+    where: {},
+    order: [["symbol", "ASC"]],
+    limit: 10,
+    offset: 10 * (page - 1),
+  };
+
+  if (search) {
+    if (search.length < 6)
+      options.where = { symbol: { [Sequelize.Op.like]: `%${search}%` } };
+    else options.where = { symbol: search };
+  }
+
+  if (onlyFavorites) options.where.isFavorit = true;
+
+  return symbolModel.findAndCountAll(options);
 }
 
 function getSymbol(symbol) {
@@ -63,4 +83,5 @@ module.exports = {
   updateSymbol,
   deleteAll,
   bulkInsert,
+  searchSymbols,
 };

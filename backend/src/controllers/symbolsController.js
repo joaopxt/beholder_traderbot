@@ -1,9 +1,18 @@
 const symbolsRepository = require("../repositories/symbolsRepository");
-const crypto = require("../utils/crypto");
 
 async function getSymbols(req, res, next) {
-  const symbols = await symbolsRepository.getSymbols();
-  res.json(symbols);
+  const { search, page, onlyFavorites } = req.query;
+
+  let result;
+  if (search || page || onlyFavorites)
+    result = await symbolsRepository.searchSymbols(
+      search,
+      onlyFavorites === "true",
+      page
+    );
+  else result = await symbolsRepository.getSymbols();
+
+  res.json(result);
 }
 
 async function updateSymbol(req, res, next) {
@@ -20,7 +29,7 @@ async function getSymbol(req, res, next) {
 }
 
 async function syncSymbols(req, res, next) {
-  const favouriteSymbols = (await symbolsRepository.getSymbols())
+  const favoriteSymbols = (await symbolsRepository.getSymbols())
     .filter((s) => s.isFavorit)
     .map((s) => s.symbol);
 
@@ -48,7 +57,7 @@ async function syncSymbols(req, res, next) {
       quote: item.quoteAsset,
       minNotional: minNotionalFilter ? minNotionalFilter.minNotional : "1",
       minLotSize: minLotSizeFilter ? minLotSizeFilter.minQty : "1",
-      isFavorit: favouriteSymbols.some((s) => s === item.symbol),
+      isFavorit: favoriteSymbols.some((s) => s === item.symbol),
     };
   });
 

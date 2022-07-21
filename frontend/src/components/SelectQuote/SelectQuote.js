@@ -17,7 +17,7 @@ function SelectQuote(props) {
       defaultValue={getDefaultQuote()}
       onChange={props.onChange}
     >
-      <option value="FAVOURITES">Favourites</option>
+      <option value="FAVORITES">Favorites</option>
       <option value="BNB">BNB</option>
       <option value="BRL">BRL</option>
       <option value="BTC">BTC</option>
@@ -29,7 +29,7 @@ function SelectQuote(props) {
 
 export function filterSymbolObjects(symbols, quote) {
   return symbols.filter((s) => {
-    if (quote === "FAVOURITES") return s.isFavorit;
+    if (quote === "FAVORITES") return s.isFavorit;
     else return s.symbol.endsWith(quote);
   });
 }

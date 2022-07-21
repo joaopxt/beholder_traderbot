@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import useWebSocket from "react-use-websocket";
 import Menu from "../../components/menu/Menu";
 import MiniTicker from "./MiniTicker/MiniTicker";
@@ -7,8 +8,11 @@ import Wallet from "./Wallet/Wallet";
 import CandleChart from "./CandleChart";
 import NewOrderButton from "../../components/NewOrder/NewOrderButton";
 import NewOrderModal from "../../components/NewOrder/NewOrderModal";
+import SelectSymbol from "../../components/SelectSymbol/SelectSymbol";
 
 function Dashboard() {
+  const history = useHistory();
+
   const [miniTickerState, setMiniTickerState] = useState({});
 
   const [bookState, setBookState] = useState({});
@@ -17,8 +21,14 @@ function Dashboard() {
 
   const [wallet, setWallet] = useState({});
 
+  const [chartSymbol, setChartSymbol] = useState("BTCBUSD");
+
   function onWalletUpdate(walletObj) {
     setWallet(walletObj);
+  }
+
+  function onOrderSubmit(order) {
+    history.push("/orders/" + order.symbol);
   }
 
   const { lastJsonMessage } = useWebSocket(process.env.REACT_APP_WS_URL, {
@@ -40,6 +50,10 @@ function Dashboard() {
     reconnectInterval: 3000,
   });
 
+  function onChangeSymbol(event) {
+    setChartSymbol(event.target.value);
+  }
+
   return (
     <React.Fragment>
       <Menu />
@@ -48,19 +62,23 @@ function Dashboard() {
           <div className="d-block mb-4 mb-md-0">
             <h1 className="h4">Dashboard</h1>
           </div>
-          <div className="mb-4">
-            <NewOrderButton />
+          <div className="btn-toolbar mb-md-0">
+            <div className="d-inline-flex align-items-center">
+              <SelectSymbol onChange={onChangeSymbol} />
+            </div>
+            <div className="ms-2 ms-lg-3">
+              <NewOrderButton />
+            </div>
           </div>
         </div>
-        <CandleChart symbol="BTCUSD" />
+        <CandleChart symbol={chartSymbol} />
         <MiniTicker data={miniTickerState} />
         <div className="row">
           <BookTicker data={bookState} />
           <Wallet data={balanceState} onUpdate={onWalletUpdate} />
         </div>
       </main>
-      {JSON.stringify(wallet)}
-      <NewOrderModal wallet={wallet} />
+      <NewOrderModal wallet={wallet} onSubmit={onOrderSubmit} />
     </React.Fragment>
   );
 }

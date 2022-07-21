@@ -61,9 +61,9 @@ function SideBar() {
               >
                 <span className="sidebar-icon">
                   <img
-                    src="/img/brand/light.svg"
-                    height="20"
-                    width="20"
+                    src="/img/favicon/favicon-32x32.png"
+                    height="32"
+                    width="32"
                     alt="Beholder Logo"
                   />
                 </span>
@@ -125,20 +125,20 @@ function SideBar() {
               className="dropdown-divider mt-4 mb-3 border-gray-700"
             ></li>
             <SideBarItem to="/" text="Logout" onClick={onLogoutClick}>
-            <svg
-                    className="icon icon-xs me-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    ></path>
-                  </svg>
+              <svg
+                className="icon icon-xs me-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                ></path>
+              </svg>
             </SideBarItem>
           </ul>
         </div>

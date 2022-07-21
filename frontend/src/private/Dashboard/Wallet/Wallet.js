@@ -29,7 +29,6 @@ function Wallet(props) {
         });
 
         if (props.onUpdate) props.onUpdate(balances);
-        console.log(props);
 
         setBalances(balances);
       })
