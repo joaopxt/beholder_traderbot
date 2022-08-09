@@ -72,6 +72,14 @@ module.exports = (settings) => {
     );
   }
 
+  async function chartStream(symbol, interval, callback) {
+    const binance = new Binance();
+    binance.websockets.chart(symbol, interval, (symbol, interval, chart) => {
+      const ohlc = binance.ohlc(chart);
+      callback(ohlc);
+    });
+  }
+
   return {
     exchangeInfo,
     miniTickerStream,
@@ -83,5 +91,6 @@ module.exports = (settings) => {
     cancel,
     orderStatus,
     orderTrade,
+    chartStream,
   };
 };

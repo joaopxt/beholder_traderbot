@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { getBalance } from "../../../services/ExchangeService";
-import { useHistory } from "react-router-dom";
 import "../Dashboard.css";
 
 /**
@@ -12,7 +11,6 @@ import "../Dashboard.css";
 function Wallet(props) {
   //if (!props || !props.data) return <React.Fragment></React.Fragment>;
 
-  const history = useHistory();
   const [balances, setBalances] = useState([]);
 
   function getBalanceCall() {
@@ -38,12 +36,16 @@ function Wallet(props) {
   }
 
   useEffect(() => {
-    getBalanceCall();
-    const intervalId = setInterval(() => {
+    if (props.data && Object.entries(props.data).length)
+      setBalances(props.data);
+    else {
       getBalanceCall();
-    }, 60000);
+      const intervalId = setInterval(() => {
+        getBalanceCall();
+      }, 60000);
 
-    return () => clearInterval(intervalId);
+      return () => clearInterval(intervalId);
+    }
   }, [props.data]);
 
   return (
