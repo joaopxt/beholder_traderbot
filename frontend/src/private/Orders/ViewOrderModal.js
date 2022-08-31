@@ -83,12 +83,8 @@ function ViewOrderModal(props) {
         return history.push("/orders/" + order.symbol);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401) {
-          btnClose.current.click();
-          return history.push("/");
-        }
-        console.error(err);
-        setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        setError(err.response ? err.response.data : err.message);
       });
   }
 

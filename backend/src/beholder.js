@@ -24,7 +24,7 @@ function updateMemory(symbol, index, interval, value) {
 
   if (memoryKey === "BTCUSDT:RSI_1m") {
     if (MEMORY[memoryKey].current > 70) {
-      console.log("ENTROU NA CONDIÇÃO");
+      //console.log("ENTROU NA CONDIÇÃO");
     }
   }
 

@@ -195,6 +195,15 @@ function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
   console.log(`Chart Monitor has started at ${symbol}_${interval}`);
 }
 
+function stopChartMonitor(symbol, interval, indexes, logs) {
+  if (!symbol)
+    return new Error(`You can't stop a Chart Monitor without a symbol`);
+  if (!exchange) return new Error("Exchange Monitor not initialized yet!");
+
+  exchange.terminateChartStream(symbol, interval);
+  if (logs) console.log(`Chart Monitor ${symbol}_${interval} stopped!`);
+}
+
 async function init(settings, wssInstance, beholderInstance) {
   if (!settings || !beholderInstance)
     throw new Error(

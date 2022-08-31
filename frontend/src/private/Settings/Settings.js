@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useHistory } from "react-router-dom";
 import { getSettings, updateSettings } from "../../services/SettingsService";
 import Menu from "../../components/menu/Menu";
 import Symbols from "./Symbols";
+import Footer from "../../components/Footer/Footer";
 
 function Settings() {
   const inputEmail = useRef("");
@@ -12,8 +12,6 @@ function Settings() {
   const inputStreamUrl = useRef("");
   const inputAccessKey = useRef("");
   const inputSecretKey = useRef("");
-
-  const history = useHistory();
 
   const [error, setError] = useState("");
 
@@ -29,12 +27,8 @@ function Settings() {
         inputAccessKey.current.value = settings.accessKey;
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err.message);
-
-        if (err.response) setError(err.response.data);
-        else setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        setError(err.response ? err.response.data : err.message);
       });
   }, []);
 
@@ -80,7 +74,7 @@ function Settings() {
       })
       .catch((error) => {
         setSuccess("");
-        console.error(error.message);
+        console.error(error.response ? error.response.data : error.message);
         setError("Can't update the settings.");
       });
   }
@@ -227,6 +221,7 @@ function Settings() {
           </div>
         </div>
         <Symbols />
+        <Footer />
       </main>
     </React.Fragment>
   );

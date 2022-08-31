@@ -44,10 +44,8 @@ function Symbols() {
     syncSymbols(token)
       .then((response) => setIsSyncing(false))
       .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err.message);
-        setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        setError(err.response ? err.response.data : err.message);
         setSuccess("");
       });
   }
@@ -67,10 +65,8 @@ function Symbols() {
         setCount(result.count);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err.message);
-        setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        setError(err.response ? err.response.data : err.message);
         setSuccess("");
       });
   }

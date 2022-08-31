@@ -9,6 +9,7 @@ import OrderRow from "./OrderRow";
 import Pagination from "../../components/Pagination/Pagination";
 import SearchSymbol from "../../components/SearchSymbol/SearchSymbol";
 import ViewOrderModal from "./ViewOrderModal";
+import Footer from "../../components/Footer/Footer";
 
 function Orders() {
   const { symbol } = useParams();
@@ -30,11 +31,6 @@ function Orders() {
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(parseInt(getPage()));
 
-  function errorProcedure(err) {
-    if (err.response && err.response.status === 401) return history.push("/");
-    console.error(err);
-  }
-
   function getBalanceCall(token) {
     getBalance(token)
       .then((info) => {
@@ -47,7 +43,9 @@ function Orders() {
         });
         setBalances(balances);
       })
-      .catch((err) => errorProcedure(err));
+      .catch((err) =>
+        console.error(err.response ? err.response.data : err.message)
+      );
   }
 
   function getOrdersCall(token) {
@@ -56,7 +54,9 @@ function Orders() {
         setOrders(result.rows);
         setCount(result.count);
       })
-      .catch((err) => errorProcedure(err));
+      .catch((err) =>
+        console.error(err.response ? err.response.data : err.message)
+      );
   }
 
   useEffect(() => {
@@ -133,6 +133,7 @@ function Orders() {
           </table>
           <Pagination count={count} />
         </div>
+        <Footer />
       </main>
       <ViewOrderModal data={viewOrder} />
       <NewOrderModal wallet={balances} onSubmit={onOrderSubmit} />

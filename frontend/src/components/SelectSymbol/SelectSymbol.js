@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useHistory } from "react-router-dom";
 import { getSymbols } from "../../services/SymbolsService";
 
 /**
@@ -11,8 +10,6 @@ import { getSymbols } from "../../services/SymbolsService";
  */
 
 function SelectSymbol(props) {
-  const history = useHistory();
-
   const [symbols, setSymbols] = useState(["LOADING"]);
   const [onlyFavorites, setOnlyFavorites] = useState(
     props.onlyFavorites === null || props.onlyFavorites === undefined
@@ -51,9 +48,7 @@ function SelectSymbol(props) {
         } else setSymbols(["NO SYMBOLS"]);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401)
-          return history.push("/");
-        console.error(err);
+        console.error(err.response ? err.response.data : err.message);
         setSymbols(["ERROR"]);
       });
   }, [onlyFavorites]);

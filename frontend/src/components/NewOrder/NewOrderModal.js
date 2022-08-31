@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useHistory } from "react-router-dom";
 import { getSymbol } from "../../services/SymbolsService";
 import SelectSymbol from "../SelectSymbol/SelectSymbol";
 import SymbolPrice from "./SymbolPrice";
@@ -18,8 +17,6 @@ import { placeOrder } from "../../services/OrdersService";
  */
 
 function NewOrderModal(props) {
-  const history = useHistory();
-
   const [error, setError] = useState("");
   const [symbol, setSymbol] = useState({});
   const DEFAULT_ORDER = {
@@ -57,12 +54,8 @@ function NewOrderModal(props) {
         if (props.onSubmit) props.onSubmit(result);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401) {
-          btnClose.current.click();
-          return history.push("/");
-        }
-        console.error(err);
-        setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        setError(err.response ? err.response.data : err.message);
       });
   }
 
@@ -117,12 +110,8 @@ function NewOrderModal(props) {
         setSymbol(symbolObject);
       })
       .catch((err) => {
-        if (err.response && err.response.status === 401) {
-          btnClose.current.click();
-          return history.push("/");
-        }
-        console.error(err);
-        setError(err.message);
+        console.error(err.response ? err.response.data : err.message);
+        return setError(err.response ? err.response.data : err.message);
       });
   }, [order.symbol]);
 

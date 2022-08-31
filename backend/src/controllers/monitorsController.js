@@ -1,4 +1,5 @@
 const monitorsRepository = require("../repositories/monitorsRepository");
+const appEm = require("../app-em");
 
 async function startMonitor(req, res, next) {
   const id = req.params.id;
@@ -7,7 +8,15 @@ async function startMonitor(req, res, next) {
   if (monitor.isSystemMon)
     return res.status(403).send("You can't start or stop the system monitors");
 
-  //start no monitor
+  //testar os tipos aqui
+  const indexes = monitor.indexes ? monitor.indexes.split(",") : [];
+  appEm.startChartMonitor(
+    monitor.symbol,
+    monitor.interval,
+    indexes,
+    monitor.broadcastLabel,
+    monitor.logs
+  );
 
   monitor.isActive = true;
   await monitor.save();
