@@ -5,6 +5,7 @@ const monitorTypes = {
   BOOK: "BOOK",
   USER_DATA: "USER_DATA",
   CANDLES: "CANDLES",
+  TICKER: "TICKER",
 };
 
 async function monitorExists(type, symbol, interval) {
@@ -61,8 +62,8 @@ async function updateMonitor(id, newMonitor) {
     currentMonitor.type = newMonitor.type;
 
   if (currentMonitor.type === monitorTypes.CANDLES) {
-    if (newMonitor.symbol && newMonitor.symbol !== currentMonitor.symbol)
-      currentMonitor.symbol = newMonitor.symbol;
+    if (newMonitor.interval && newMonitor.interval !== currentMonitor.interval)
+      currentMonitor.interval = newMonitor.interval;
   } else currentMonitor.interval = null;
 
   if (
@@ -71,7 +72,7 @@ async function updateMonitor(id, newMonitor) {
   )
     currentMonitor.broadcastLabel = newMonitor.broadcastLabel;
 
-  if (newMonitor.indexes && newMonitor.indexes !== currentMonitor.indexes)
+  if (newMonitor.indexes !== currentMonitor.indexes)
     currentMonitor.indexes = newMonitor.indexes;
 
   if (

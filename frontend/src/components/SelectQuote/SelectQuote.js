@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 const DEFAULT_QUOTE_PROPERTY = "defaultQuote";
 
@@ -8,8 +8,6 @@ const DEFAULT_QUOTE_PROPERTY = "defaultQuote";
  */
 
 function SelectQuote(props) {
-  const [defaultQuote, setDefaultQuote] = useState(getDefaultQuote());
-
   return (
     <select
       id="selectQuote"

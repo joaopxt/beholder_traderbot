@@ -1,5 +1,49 @@
 const monitorsRepository = require("../repositories/monitorsRepository");
+const { monitorTypes } = require("../repositories/monitorsRepository");
 const appEm = require("../app-em");
+
+function startStreamMonitor(monitor) {
+  switch (monitor.type) {
+    case monitorTypes.CANDLES: {
+      const indexes = monitor.indexes ? monitor.indexes.split(",") : [];
+      appEm.startChartMonitor(
+        monitor.symbol,
+        monitor.interval,
+        indexes,
+        monitor.broadcastLabel,
+        monitor.logs
+      );
+      break;
+    }
+    case monitorTypes.TICKER: {
+      appEm.startTickerMonitor(
+        monitor.symbol,
+        monitor.broadcastLabel,
+        monitor.logs
+      );
+      break;
+    }
+  }
+}
+
+function stopStreamMonitor(monitor) {
+  switch (monitor.type) {
+    case monitorTypes.CANDLES: {
+      const indexes = monitor.indexes ? monitor.indexes.split(",") : [];
+      appEm.stopChartMonitor(
+        monitor.symbol,
+        monitor.interval,
+        indexes,
+        monitor.logs
+      );
+      break;
+    }
+    case monitorTypes.TICKER: {
+      appEm.stopTickerMonitor(monitor.symbol, monitor.logs);
+      break;
+    }
+  }
+}
 
 async function startMonitor(req, res, next) {
   const id = req.params.id;
@@ -9,14 +53,7 @@ async function startMonitor(req, res, next) {
     return res.status(403).send("You can't start or stop the system monitors");
 
   //testar os tipos aqui
-  const indexes = monitor.indexes ? monitor.indexes.split(",") : [];
-  appEm.startChartMonitor(
-    monitor.symbol,
-    monitor.interval,
-    indexes,
-    monitor.broadcastLabel,
-    monitor.logs
-  );
+  startStreamMonitor(monitor);
 
   monitor.isActive = true;
   await monitor.save();
@@ -27,10 +64,11 @@ async function stopMonitor(req, res, next) {
   const id = req.params.id;
   const monitor = await monitorsRepository.getMonitor(id);
   if (!monitor.isActive) return res.sendStatus(204);
-  if (monitor.isSystemMon)
+  if (monitor.isSystemMon) {
     return res.status(403).send("You can't start or stop the system monitors");
+  }
 
-  //stop no monitor
+  stopStreamMonitor(monitor);
 
   monitor.isActive = false;
   await monitor.save();
@@ -54,7 +92,7 @@ async function insertMonitor(req, res, next) {
   const savedMonitor = await monitorsRepository.insertMonitor(newMonitor);
 
   if (savedMonitor.isActive) {
-    //start no monitor
+    startStreamMonitor(savedMonitor);
   }
   res.status(201).json(savedMonitor.get({ plain: true }));
 }
@@ -64,15 +102,17 @@ async function updateMonitor(req, res, next) {
   const newMonitor = req.body;
 
   const currentMonitor = await monitorsRepository.getMonitor(id);
+  const oldIndexes = currentMonitor.indexes
+    ? currentMonitor.indexes.split(",")
+    : [];
+
   if (currentMonitor.isSystemMon) return res.sendStatus(403);
 
   const updatedMonitor = await monitorsRepository.updateMonitor(id, newMonitor);
 
-  if (updateMonitor.isActive) {
-    //stop no monitor
-    //start no monitor
-  } else {
-    //stop no monitor
+  stopStreamMonitor(currentMonitor);
+  if (updatedMonitor.isActive) {
+    startStreamMonitor(updatedMonitor);
   }
 
   res.json(updatedMonitor);
@@ -84,7 +124,7 @@ async function deleteMonitor(req, res, next) {
   if (currentMonitor.isSystemMon) return res.sendStatus(403);
 
   if (currentMonitor.isActive) {
-    //stop no monitor
+    stopStreamMonitor(currentMonitor);
   }
 
   await monitorsRepository.deleteMonitor(id);

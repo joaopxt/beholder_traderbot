@@ -1,6 +1,8 @@
 const Binance = require("node-binance-api");
 
 module.exports = (settings) => {
+  const LOGS = process.env.BINANCE_LOGS === "true";
+
   if (!settings)
     throw new Error("The settings object is required to connect on exchange");
 
@@ -73,7 +75,7 @@ module.exports = (settings) => {
   }
 
   async function chartStream(symbol, interval, callback) {
-    const binance = new Binance();
+    //const binance = new Binance();
     binance.websockets.chart(symbol, interval, (symbol, interval, chart) => {
       const ohlc = binance.ohlc(chart);
       callback(ohlc);
@@ -85,6 +87,18 @@ module.exports = (settings) => {
     console.log(
       `Chart Stream ${symbol.toLowerCase()}@kline_${interval} terminated`
     );
+  }
+
+  async function tickerStream(symbol, callback) {
+    const streamUrl = binance.websockets.prevDay(symbol, (data, converted) => {
+      callback(converted);
+    });
+    if (LOGS) console.log(`Ticker Stream connected at ${streamUrl}`);
+  }
+
+  function terminateTickerStream(symbol) {
+    binance.websockets.terminate(`${symbol.toLowerCase()}@ticker`);
+    console.log(`Ticker Stream disconnected at ${symbol}@ticker`);
   }
 
   return {
@@ -100,5 +114,7 @@ module.exports = (settings) => {
     orderTrade,
     chartStream,
     terminateChartStream,
+    tickerStream,
+    terminateTickerStream,
   };
 };

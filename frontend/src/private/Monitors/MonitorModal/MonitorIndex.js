@@ -10,18 +10,30 @@ import SmartBadge from "../../../components/SmartBadge/SmartBadge";
 function MonitorIndex(props) {
   const btnAddIndex = useRef("");
   const selectIndex = useRef("");
+  const inputPeriod = useRef("");
 
   const [indexes, setIndexes] = useState([]);
 
   useEffect(() => {
-    if (!props.indexes) return;
-    setIndexes(props.indexes.split(","));
+    if (props.indexes) {
+      setIndexes(props.indexes.split(","));
+    } else {
+      setIndexes([]);
+    }
   }, [props.indexes]);
 
   function onAddIndexClick(event) {
     const value = selectIndex.current.value;
     if (value !== "NONE" && indexes.indexOf(value) === -1) {
-      indexes.push(value);
+      inputPeriod.current.value =
+        inputPeriod.current.value === "Params" ? "" : inputPeriod.current.value;
+      indexes.push(
+        value + "_" + inputPeriod.current.value.split(",").join("_")
+      );
+
+      selectIndex.current.value = "NONE";
+      inputPeriod.current.value = "";
+
       setIndexes(indexes);
       if (props.onChange)
         props.onChange({ target: { id: "indexes", value: indexes.join(",") } });
@@ -37,25 +49,73 @@ function MonitorIndex(props) {
       props.onChange({ target: { id: "indexes", value: indexes.join(",") } });
   }
 
+  function onIndexChange(event) {
+    switch (event.target.value) {
+      case "EMA":
+      case "SMA":
+      case "RSI":
+        inputPeriod.current.placeholder = "period";
+        break;
+      case "BB":
+        inputPeriod.current.placeholder = "period, stdDev";
+        break;
+      case "SRSI":
+        inputPeriod.current.placeholder = "d, k, rsi, stoch";
+        break;
+      case "MACD":
+        inputPeriod.current.placeholder = "fast, slow, signal";
+        break;
+      default:
+        break;
+    }
+  }
+
   return (
     <React.Fragment>
       <div className="row">
         <div className="col-12 mb-3">
           <div className="form-group">
-            <label htmlFor="indexes">Indexes:</label>
+            <label htmlFor="indexes">
+              Indexes:{" "}
+              <span
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="The index params in parenthesis must be provided"
+                className="badge bg-warning py-1"
+              >
+                ?
+              </span>
+            </label>
             <div className="input-group input-group-merge">
               <select
                 id="indexes"
                 ref={selectIndex}
                 className="form-select"
                 defaultValue="NONE"
+                onChange={onIndexChange}
               >
                 <option value="NONE">None</option>
-                <option value="MACD">
-                  Moving Average Convergence Divergence
+                <option value="BB">
+                  Bollinger Bands (period and std. dev.)
                 </option>
-                <option value="RSI">Relative Strenght Index</option>
+                <option value="EMA">EMA (period)</option>
+                <option value="MACD">
+                  MACD (fast, slow and signal periods)
+                </option>
+                <option value="RSI">RSI (period)</option>
+                <option value="SMA">SMA (period)</option>
+                <option value="SRSI">
+                  Stoch RSI (d, k, rsi and stochastic periods)
+                </option>
               </select>
+              <input
+                ref={inputPeriod}
+                type="text"
+                id="params"
+                placeholder="Params"
+                className="form-control"
+                required={true}
+              />
               <button
                 type="button"
                 className="btn btn-secondary"

@@ -3,7 +3,15 @@ const {
   getActiveMonitors,
   monitorTypes,
 } = require("./repositories/monitorsRepository");
-const { RSI, MACD, indexKeys } = require("./utils/indexes");
+const {
+  RSI,
+  MACD,
+  StochRSI,
+  BollingerBands,
+  SMA,
+  EMA,
+  indexKeys,
+} = require("./utils/indexes");
 
 let WSS, beholder, exchange;
 
@@ -127,7 +135,9 @@ function processExecutionData(executionData, broadcastLabel) {
 function startUserDataMonitor(broadcastLabel, logs) {
   if (!exchange) return new Error("Exchange Monitor not initialized yet!");
 
-  const [balanceBroadcast, executionBroadcast] = broadcastLabel.split(",");
+  const [balanceBroadcast, executionBroadcast] = broadcastLabel
+    ? broadcastLabel.split(",")
+    : [null, null];
 
   loadWallet();
 
@@ -146,29 +156,44 @@ function startUserDataMonitor(broadcastLabel, logs) {
   console.log(`UserData Monitor has started at ${broadcastLabel}`);
 }
 
-function processChartData(symbol, indexes, interval, ohlc) {
-  indexes.map((index) => {
-    switch (index) {
-      case indexKeys.RSI: {
-        return beholder.updateMemory(
-          symbol,
-          indexKeys.RSI,
-          interval,
-          RSI(ohlc.close)
-        );
+function processChartData(symbol, indexes, interval, ohlc, logs) {
+  if (typeof indexes === "string") indexes = indexes.split(",");
+  if (indexes && indexes.length > 0) {
+    indexes.map((index) => {
+      const params = index.split("_");
+      const indexName = params[0];
+      params.splice(0, 1);
+
+      let calc;
+      switch (indexName) {
+        case indexKeys.RSI:
+          calc = RSI(ohlc.close, ...params);
+          break;
+        case indexKeys.MACD:
+          calc = MACD(ohlc.close, ...params);
+          break;
+        case indexKeys.SMA:
+          calc = SMA(ohlc.close, ...params);
+          break;
+        case indexKeys.EMA:
+          calc = EMA(ohlc.close, ...params);
+          break;
+        case indexKeys.BOLLINGER_BANDS:
+          calc = BollingerBands(ohlc.close, ...params);
+          break;
+        case indexKeys.STOCH_RSI:
+          calc = StochRSI(ohlc.close, ...params);
+          break;
+        default:
+          return;
       }
-      case indexKeys.MACD: {
-        return beholder.updateMemory(
-          symbol,
-          indexKeys.MACD,
-          interval,
-          MACD(ohlc.close)
-        );
-      }
-      default:
-        return;
-    }
-  });
+
+      if (logs)
+        console.log(`${indexName} calculated: ${JSON.stringify(calc.current)}`);
+
+      return beholder.updateMemory(symbol, index, interval, calc);
+    });
+  }
 }
 
 function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
@@ -190,7 +215,7 @@ function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
 
     if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: lastCandle });
 
-    processChartData(symbol, indexes, interval, ohlc);
+    processChartData(symbol, indexes, interval, ohlc, logs);
   });
   console.log(`Chart Monitor has started at ${symbol}_${interval}`);
 }
@@ -202,6 +227,81 @@ function stopChartMonitor(symbol, interval, indexes, logs) {
 
   exchange.terminateChartStream(symbol, interval);
   if (logs) console.log(`Chart Monitor ${symbol}_${interval} stopped!`);
+
+  beholder.deleteMemory(symbol, "LAST_CANDLE", interval);
+
+  if (indexes && Array.isArray(indexes)) {
+    indexes.map((ix) => beholder.deleteMemory(symbol, ix, interval));
+  }
+}
+
+function getLightTicker(data) {
+  delete data.eventType;
+  delete data.eventTime;
+  delete data.symbol;
+  delete data.openTime;
+  delete data.closeTime;
+  delete data.firstTradeId;
+  delete data.lastTradeId;
+  delete data.numTrades;
+  delete data.closeQty;
+  delete data.bestBidQty;
+  delete data.bestAskQty;
+
+  data.volume = parseFloat(data.volume);
+  data.quoteVolume = parseFloat(data.quoteVolume);
+  data.priceChange = parseFloat(data.priceChange);
+  data.percentChange = parseFloat(data.percentChange);
+  data.averagePrice = parseFloat(data.averagePrice);
+  data.prevClose = parseFloat(data.prevClose);
+  data.high = parseFloat(data.high);
+  data.low = parseFloat(data.low);
+  data.open = parseFloat(data.open);
+  data.close = parseFloat(data.close);
+  data.bestBid = parseFloat(data.bestBid);
+  data.bestAsk = parseFloat(data.bestAsk);
+
+  return data;
+}
+
+function startTickerMonitor(symbol, broadcastLabel, logs) {
+  if (!symbol) {
+    return new Error(`You can't start a Ticker Monitor without a symbol`);
+  }
+  if (!exchange) return new Error("Exchange Monitor not initialized yet!");
+
+  exchange.tickerStream(symbol, async (data) => {
+    //if (logs) console.log(data); Console log dos dados da Ticker Stream
+
+    try {
+      const ticker = getLightTicker({ ...data });
+      const currentMemory = beholder.getMemory(symbol, indexKeys.TICKER);
+
+      const newMemory = {};
+      newMemory.previous = currentMemory ? currentMemory.current : ticker;
+      newMemory.current = ticker;
+
+      beholder.updateMemory(data.symbol, indexKeys.TICKER, null, newMemory);
+
+      if (WSS && broadcastLabel) WSS.broadcast({ [broadcastLabel]: data });
+    } catch (err) {
+      if (logs) console.error(err);
+    }
+  });
+  console.log(`Ticker Monitor has started for ${symbol}`);
+}
+
+function stopTickerMonitor(symbol, logs) {
+  if (!symbol)
+    return new Error(`You can't stop a Ticker Monitor without a symbol`);
+
+  if (!exchange) return new Error("Exchange Monitor not initialized yet!");
+
+  exchange.terminateTickerStream(symbol);
+
+  if (logs) console.log(`Ticker Monitor ${symbol} stopped!`);
+
+  beholder.deleteMemory(symbol, indexKeys.TICKER);
 }
 
 async function init(settings, wssInstance, beholderInstance) {
@@ -215,25 +315,27 @@ async function init(settings, wssInstance, beholderInstance) {
   exchange = require("./utils/exchange")(settings);
 
   const monitors = await getActiveMonitors();
-  monitors.map((monitor) => {
+  monitors.map((m) => {
     setTimeout(() => {
-      switch (monitor.type) {
+      switch (m.type) {
         case monitorTypes.MINI_TICKER:
-          return startMiniTickerMonitor(monitor.broadcastLabel, monitor.logs);
+          return startMiniTickerMonitor(m.broadcastLabel, m.logs);
         case monitorTypes.BOOK:
-          return startBookMonitor(monitor.broadcastLabel, monitor.logs);
+          return startBookMonitor(m.broadcastLabel, m.logs);
         case monitorTypes.USER_DATA:
-          return startUserDataMonitor(monitor.broadcastLabel, monitor.logs);
+          return startUserDataMonitor(m.broadcastLabel, m.logs);
         case monitorTypes.CANDLES:
           return startChartMonitor(
-            monitor.symbol,
-            monitor.interval,
-            monitor.indexes.split(","),
-            monitor.broadcastLabel,
-            monitor.logs
+            m.symbol,
+            m.interval,
+            m.indexes ? m.indexes.split(",") : [],
+            m.broadcastLabel,
+            m.logs
           );
+        case monitorTypes.TICKER:
+          return startTickerMonitor(m.symbol, m.broadcastLabel, m.logs);
       }
-    }, 250);
+    }, 250); //Binance only permits 5 commands / second
   });
 
   console.log("App Exchange Monitor is running!");
@@ -242,4 +344,7 @@ async function init(settings, wssInstance, beholderInstance) {
 module.exports = {
   init,
   startChartMonitor,
+  stopChartMonitor,
+  startTickerMonitor,
+  stopTickerMonitor,
 };

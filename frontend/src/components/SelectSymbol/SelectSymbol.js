@@ -12,13 +12,17 @@ import { getSymbols } from "../../services/SymbolsService";
 function SelectSymbol(props) {
   const [symbols, setSymbols] = useState(["LOADING"]);
   const [onlyFavorites, setOnlyFavorites] = useState(
-    props.onlyFavorites === null || props.onlyFavorites === undefined
-      ? true
-      : props.onlyFavorites
+    props.onlyFavorites !== null && props.onlyFavorites !== undefined
+      ? props.onlyFavorites
+      : true
   );
 
   const selectRef = useRef("");
   const buttonRef = useRef("");
+
+  useEffect(() => {
+    selectRef.current.value = props.symbol;
+  }, [props.symbol]);
 
   function onFavouriteClick(event) {
     setOnlyFavorites(!onlyFavorites);

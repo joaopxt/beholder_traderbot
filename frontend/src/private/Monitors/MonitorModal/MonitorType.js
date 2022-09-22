@@ -24,10 +24,8 @@ function MonitorType(props) {
           className="form-select"
           onChange={props.onChange}
         >
-          <option value="BOOK">Book</option>
           <option value="CANDLES">Candles</option>
-          <option value="MINI_TICKER">Mini-Ticker</option>
-          <option value="USER-DATA">User Data</option>
+          <option value="TICKER">Ticker</option>
         </select>
       </div>
     );

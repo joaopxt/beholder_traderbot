@@ -31,12 +31,15 @@ function Monitors() {
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(getPage());
   const [monitors, setMonitors] = useState([]);
-  const [editMonitor, setEditMonitor] = useState({
+
+  const DEFAULT_MONITOR = {
+    symbol: "BNBBTC",
     type: "CANDLES",
     interval: "1m",
     isActive: false,
     logs: false,
-  });
+  };
+  const [editMonitor, setEditMonitor] = useState(DEFAULT_MONITOR);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -51,7 +54,8 @@ function Monitors() {
   }, [page]);
 
   function onEditClick(event) {
-    console.log("edit click");
+    const id = event.target.id.replace("edit", "");
+    setEditMonitor(monitors.find((m) => m.id == id));
   }
 
   function onStopClick(event) {
@@ -94,6 +98,10 @@ function Monitors() {
     history.go(0);
   }
 
+  function onNewMonitorClick(event) {
+    setEditMonitor(DEFAULT_MONITOR);
+  }
+
   return (
     <React.Fragment>
       <Menu />
@@ -109,6 +117,7 @@ function Monitors() {
                 className="btn btn-primary animate-up-2"
                 data-bs-toggle="modal"
                 data-bs-target="#modalMonitor"
+                onClick={onNewMonitorClick}
               >
                 <svg
                   className="icon icon-xs me-2"
