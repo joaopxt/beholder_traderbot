@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import IndexSelect from "./IndexSelect";
 import VariableInput from "./VariableInput";
+import SmartBadge from "../../../../components/SmartBadge/SmartBadge";
 
 /**
  * props:
@@ -18,6 +19,11 @@ function ConditionsArea(props) {
   useEffect(() => {
     setIndexes(props.indexes);
   }, [props.indexes]);
+
+  useEffect(() => {
+    setConditions([]);
+    setSelectedIndex({ example: 0 });
+  }, [props.symbol]);
 
   useEffect(() => {
     setConditions(parseConditions(props.conditions));
@@ -81,6 +87,29 @@ function ConditionsArea(props) {
     props.onChange({ target: { id: "indexes", value: conditionIndexes } });
   }
 
+  function btnRemoveCondition(event) {
+    const id = event.target.id;
+    const pos = conditions.findIndex((c) => c.eval === id);
+    conditions.splice(pos, 1);
+    if (props.onChange) {
+      props.onChange({
+        target: {
+          id: "conditions",
+          value: conditions.map((c) => c.eval).join(" && "),
+        },
+      });
+    }
+
+    const conditionIndexes = parseIndexes(conditions);
+    if (props.onChange) {
+      props.onChange({
+        target: {
+          id: "indexes",
+          value: conditionIndexes,
+        },
+      });
+    }
+  }
   return (
     <React.Fragment>
       <div className="row">
@@ -93,6 +122,22 @@ function ConditionsArea(props) {
           />
         </div>
       </div>
+      {conditions ? (
+        <div className="divScrollBadges">
+          <div className="d-inline-flex flex-row align-content-start">
+            {conditions.map((condition, ix) => (
+              <SmartBadge
+                key={ix}
+                id={condition.eval}
+                text={condition.text}
+                onClick={btnRemoveCondition}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <React.Fragment></React.Fragment>
+      )}
     </React.Fragment>
   );
 }

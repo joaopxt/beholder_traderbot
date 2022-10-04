@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 /**
  * props:
@@ -8,6 +8,9 @@ import React, { useState, useEffect } from "react";
  */
 
 function VariableInput(props) {
+  const variableRef = useRef("");
+
+  const [indexes, setIndexes] = useState({});
   const [index, setIndex] = useState({});
   const [variable, setVariable] = useState({});
   const [operator, setOperator] = useState("==");
@@ -15,7 +18,12 @@ function VariableInput(props) {
   useEffect(() => {
     setIndex(props.selectedIndex);
     setVariable(props.selectedIndex.example);
+    variableRef.current.value = "";
   }, [props.selectedIndex]);
+
+  useEffect(() => {
+    setIndexes(props.indexes);
+  }, [props.indexes]);
 
   function onOperatorChange(event) {
     setOperator(event.target.value);
@@ -75,14 +83,16 @@ function VariableInput(props) {
       </select>
       <input
         type="text"
+        ref={variableRef}
+        id="variable"
         list="variables"
         className="form-select"
         onChange={onVariableChange}
-        placeholder={index.example}
+        placeholder={`${index.example}`}
       />
       <datalist id="variables">
-        {props.indexes && Array.isArray(props.indexes) ? (
-          props.indexes
+        {indexes && Array.isArray(indexes) ? (
+          indexes
             .filter((i) => i.eval !== index.eval)
             .map((item) => (
               <option key={`${item.symbol}:${item.variable}`}>

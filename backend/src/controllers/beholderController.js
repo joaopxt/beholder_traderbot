@@ -1,4 +1,5 @@
 const beholder = require("../beholder");
+const indexes = require("../utils/indexes");
 
 function getMemory(req, res, next) {
   res.json(beholder.getMemory());
@@ -12,8 +13,18 @@ function getBrain(req, res, next) {
   res.json(beholder.getBrain());
 }
 
+function getBrainIndexes(req, res, next) {
+  res.json(beholder.getBrainIndexes());
+}
+
+function getAnalysisIndexes(req, res, next) {
+  res.json(indexes.getAnalysisIndexes());
+}
+
 module.exports = {
   getBrain,
+  getBrainIndexes,
   getMemory,
   getMemoryIndexes,
+  getAnalysisIndexes,
 };

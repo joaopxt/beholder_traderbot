@@ -8,4 +8,8 @@ router.get("/memory", beholderController.getMemory);
 
 router.get("/brain", beholderController.getBrain);
 
+router.get("/brain/indexes", beholderController.getBrainIndexes);
+
+router.get("/analysis", beholderController.getAnalysisIndexes);
+
 module.exports = router;
