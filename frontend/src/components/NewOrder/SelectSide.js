@@ -14,7 +14,7 @@ function SelectSide(props) {
         <select
           id="side"
           className="form-select"
-          defaultValue={props.side}
+          value={props.side}
           onChange={props.onChange}
         >
           <option value="BUY">Buy</option>

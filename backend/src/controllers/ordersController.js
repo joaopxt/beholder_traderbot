@@ -8,6 +8,11 @@ async function getOrders(req, res, next) {
   res.json(orders);
 }
 
+async function getLastOrders(req, res, next) {
+  const orders = await ordersRepository.getLastFilledOrders();
+  res.json(orders);
+}
+
 async function placeOrder(req, res, next) {
   const id = res.locals.token.id;
   const settings = await settingsRepository.getDecryptedSettings(id);
@@ -118,4 +123,5 @@ module.exports = {
   placeOrder,
   cancelOrder,
   syncOrder,
+  getLastOrders,
 };

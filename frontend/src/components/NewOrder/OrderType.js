@@ -14,7 +14,7 @@ function OrderType(props) {
         <select
           id="type"
           className="form-select"
-          defaultValue={props.type}
+          value={props.type}
           onChange={props.onChange}
         >
           <option value="ICEBERG">Iceberg</option>

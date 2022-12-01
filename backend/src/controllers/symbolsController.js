@@ -45,8 +45,9 @@ async function syncSymbols(req, res, next) {
     const minNotionalFilter = item.filters.find(
       (f) => f.filterType === "MIN_NOTIONAL"
     );
-    const minLotSizeFilter = item.filters.find(
-      (f) => f.filterType === "LOT_SIZE"
+    const lotSizeFilter = item.filters.find((f) => f.filterType === "LOT_SIZE");
+    const priceFilter = item.filters.find(
+      (f) => f.filterType === "PRICE_FILTER"
     );
 
     return {
@@ -55,8 +56,10 @@ async function syncSymbols(req, res, next) {
       quotePrecision: item.quoteAssetPrecision,
       base: item.baseAsset,
       quote: item.quoteAsset,
+      stepSize: lotSizeFilter ? lotSizeFilter.stepSize : "1",
+      tickSize: priceFilter ? priceFilter.tickSize : "1",
       minNotional: minNotionalFilter ? minNotionalFilter.minNotional : "1",
-      minLotSize: minLotSizeFilter ? minLotSizeFilter.minQty : "1",
+      minLotSize: lotSizeFilter ? lotSizeFilter.minQty : "1",
       isFavorit: favoriteSymbols.some((s) => s === item.symbol),
     };
   });

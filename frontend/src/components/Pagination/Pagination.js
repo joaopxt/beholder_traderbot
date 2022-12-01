@@ -17,6 +17,7 @@ function Pagination(props) {
 
   function getPageClass(page) {
     const queryPage = query.get("page");
+    // eslint-disable-next-line
     const isActive = queryPage == page || (!queryPage && page === 1);
     return isActive ? "page-item active" : "page-item";
   }

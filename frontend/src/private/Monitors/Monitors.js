@@ -11,6 +11,7 @@ import {
 } from "../../services/MonitorsService";
 import MonitorRow from "./MonitorRow";
 import MonitorModal from "./MonitorModal/MonitorModal";
+import Toast from "../../components/Toast/Toast";
 
 function Monitors() {
   const defaultLocation = useLocation();
@@ -31,6 +32,7 @@ function Monitors() {
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(getPage());
   const [monitors, setMonitors] = useState([]);
+  const [notification, setNotification] = useState({ type: "", text: "" });
 
   const DEFAULT_MONITOR = {
     symbol: "BNBBTC",
@@ -48,13 +50,18 @@ function Monitors() {
         setMonitors(result.rows);
         setCount(result.count);
       })
-      .catch((err) =>
-        console.error(err.response ? err.response.data : err.message)
-      );
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err.message);
+        setNotification({
+          type: "error",
+          text: err.response ? err.response.data : err.message,
+        });
+      });
   }, [page]);
 
   function onEditClick(event) {
     const id = event.target.id.replace("edit", "");
+    // eslint-disable-next-line
     setEditMonitor(monitors.find((m) => m.id == id));
   }
 
@@ -65,9 +72,13 @@ function Monitors() {
       .then((monitor) => {
         history.go(0);
       })
-      .catch((err) =>
-        console.error(err.response ? err.response.data : err.message)
-      );
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err.message);
+        setNotification({
+          type: "error",
+          text: err.response ? err.response.data : err.message,
+        });
+      });
   }
 
   function onStartClick(event) {
@@ -77,9 +88,13 @@ function Monitors() {
       .then((monitor) => {
         history.go(0);
       })
-      .catch((err) =>
-        console.error(err.response ? err.response.data : err.message)
-      );
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err.message);
+        setNotification({
+          type: "error",
+          text: err.response ? err.response.data : err.message,
+        });
+      });
   }
 
   function onDeleteClick(event) {
@@ -89,9 +104,13 @@ function Monitors() {
       .then((monitor) => {
         history.go(0);
       })
-      .catch((err) =>
-        console.error(err.response ? err.response.data : err.message)
-      );
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err.message);
+        setNotification({
+          type: "error",
+          text: err.response ? err.response.data : err.message,
+        });
+      });
   }
 
   function onModalSubmit(event) {
@@ -164,6 +183,7 @@ function Monitors() {
         <Footer />
       </main>
       <MonitorModal data={editMonitor} onSubmit={onModalSubmit} />
+      <Toast type={notification.type} text={notification.text} />
     </React.Fragment>
   );
 }

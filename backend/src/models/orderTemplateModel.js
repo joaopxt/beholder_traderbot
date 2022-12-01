@@ -1,9 +1,8 @@
 const Sequelize = require("sequelize");
 const database = require("../db");
-const actionModel = require("./actionModel");
 
-const automationModel = database.define(
-  "automation",
+const orderTemplateModel = database.define(
+  "orderTemplate",
   {
     id: {
       type: Sequelize.INTEGER,
@@ -19,39 +18,36 @@ const automationModel = database.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
-    indexes: {
+    type: {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    conditions: {
-      type: Sequelize.STRING(1000),
+    side: {
+      type: Sequelize.STRING,
       allowNull: false,
     },
-    isActive: {
-      type: Sequelize.BOOLEAN,
+    limitPrice: Sequelize.STRING,
+    limitPriceMultiplier: Sequelize.DECIMAL(10, 2),
+    stopPrice: Sequelize.STRING,
+    stopPriceMultiplier: Sequelize.DECIMAL(10, 2),
+    quantity: {
+      type: Sequelize.STRING,
       allowNull: false,
-      defaultValue: false,
     },
-    logs: {
-      type: Sequelize.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
+    quantityMultiplier: Sequelize.DECIMAL(10, 2),
+    icebergQty: Sequelize.STRING,
+    icebergQtyMultiplier: Sequelize.DECIMAL(10, 2),
     createdAt: Sequelize.DATE,
     updatedAt: Sequelize.DATE,
   },
   {
     indexes: [
       {
-        fields: ["symbol", "name"],
+        fields: ["name", "symbol"],
         unique: true,
       },
     ],
   }
 );
 
-automationModel.hasMany(actionModel, {
-  foreignKey: "automationId",
-});
-
-module.exports = automationModel;
+module.exports = orderTemplateModel;

@@ -10,7 +10,10 @@ import React from "react";
 function SmartBadge(props) {
   return (
     <div className="input-group me-2 d-flex flex-row flex-nowrap">
-      <span className="alert alert-info py-1">{props.text}</span>
+      <span className="alert alert-info py-1">
+        {props.children}
+        {props.text}
+      </span>
       <button
         type="button"
         id={props.id}

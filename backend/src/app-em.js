@@ -10,10 +10,10 @@ let WSS, beholder, exchange;
 function startMiniTickerMonitor(broadcastLabel, logs) {
   if (!exchange) return new Error("Exchange Monitor not initialized yet!");
 
-  exchange.miniTickerStream((markets) => {
+  exchange.miniTickerStream(async (markets) => {
     if (logs) console.log(markets);
 
-    Object.entries(markets).map((mkt) => {
+    Object.entries(markets).map(async (mkt) => {
       delete mkt[1].volume;
       delete mkt[1].quoteVolume;
       delete mkt[1].eventTime;
@@ -21,7 +21,13 @@ function startMiniTickerMonitor(broadcastLabel, logs) {
       Object.entries(mkt[1]).map(
         (prop) => (converted[prop[0]] = parseFloat(prop[1]))
       );
-      beholder.updateMemory(mkt[0], indexKeys.MINI_TICKER, null, converted);
+      const results = await beholder.updateMemory(
+        mkt[0],
+        indexKeys.MINI_TICKER,
+        null,
+        converted
+      );
+      if (results) results.map((r) => WSS.broadcast({ notification: r }));
     });
 
     if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: markets });
@@ -33,7 +39,7 @@ let book = [];
 async function startBookMonitor(broadcastLabel, logs) {
   if (!exchange) return new Error("Exchange Monitor not initialized yet!");
 
-  exchange.bookStream((order) => {
+  exchange.bookStream(async (order) => {
     if (logs) console.log(order);
 
     if (book.length === 300) {
@@ -46,12 +52,27 @@ async function startBookMonitor(broadcastLabel, logs) {
 
     const orderCopy = { ...order };
     delete orderCopy.symbol;
-    delete orderCopy.updatedId;
+    delete orderCopy.updateId;
+    delete orderCopy.bestAskQty;
+    delete orderCopy.bestBidQty;
     const converted = {};
     Object.entries(orderCopy).map((prop) => {
       converted[prop[0]] = parseFloat(prop[1]);
     });
-    beholder.updateMemory(order.symbol, indexKeys.BOOK, null, converted);
+
+    const currentMemory = beholder.getMemory(order.symbol, indexKeys.BOOK);
+
+    const newMemory = {};
+    newMemory.previous = currentMemory ? currentMemory.current : null;
+    newMemory.current = converted;
+
+    const results = await beholder.updateMemory(
+      order.symbol,
+      indexKeys.BOOK,
+      null,
+      newMemory
+    );
+    if (results) results.map((r) => WSS.broadcast({ notification: r }));
   });
   console.log(`Book Monitor has started at ${broadcastLabel}`);
 }
@@ -59,13 +80,14 @@ async function startBookMonitor(broadcastLabel, logs) {
 async function loadWallet() {
   if (!exchange) return new Error("Exchange Monitor not initialized yet!");
   const info = await exchange.balance();
-  const wallet = Object.entries(info).map((item) => {
-    beholder.updateMemory(
+  const wallet = Object.entries(info).map(async (item) => {
+    const results = await beholder.updateMemory(
       item[0],
       indexKeys.WALLET,
       null,
       parseFloat(item[1].available)
     );
+    if (results) results.map((r) => WSS.broadcast({ notification: r }));
 
     //enviar para o Beholder
     return {
@@ -75,6 +97,28 @@ async function loadWallet() {
     };
   });
   return wallet;
+}
+
+function notifyOrderUpdate(order) {
+  let type = "";
+  switch (order.status) {
+    case "FILLED":
+      type = "success";
+      break;
+    case "REJECTED":
+    case "EXPIRED":
+      type = "error";
+      break;
+    default:
+      type = "info";
+      break;
+  }
+  WSS.broadcast({
+    notification: {
+      type,
+      text: `Order #${order.orderId} was updated as ${order.status}.`,
+    },
+  });
 }
 
 function processExecutionData(executionData, broadcastLabel) {
@@ -105,22 +149,34 @@ function processExecutionData(executionData, broadcastLabel) {
 
   if (order.status === "REJECTED") order.obs = executionData.r;
 
-  setTimeout(() => {
-    ordersRepository
-      .updateOrderByOrderId(order.orderId, order.clientOrderId, order)
-      .then((order) => {
-        if (order) {
-          beholder.updateMemory(
-            order.symbol,
-            indexKeys.LAST_ORDER,
-            null,
-            order
-          );
-          //enviar para o Beholder
-          if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: order });
-        }
-      })
-      .catch((err) => console.error(err));
+  setTimeout(async () => {
+    try {
+      const updatedOrder = ordersRepository.updateOrderByOrderId(
+        order.orderId,
+        order.clientOrderId,
+        order
+      );
+      if (updatedOrder) {
+        notifyOrderUpdate(order);
+
+        const orderCopy = getLightOrder(updatedOrder.get({ plain: true }));
+
+        const results = await beholder.updateMemory(
+          updatedOrder.symbol,
+          indexKeys.LAST_ORDER,
+          null,
+          orderCopy
+        );
+        if (results) results.map((r) => WSS.broadcast({ notification: r }));
+        //enviar para o Beholder
+        if (broadcastLabel && WSS)
+          WSS.broadcast({
+            [broadcastLabel]: orderCopy,
+          });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, 3000);
 }
 
@@ -168,7 +224,7 @@ async function processChartData(symbol, indexes, interval, ohlc, logs) {
             )}`
           );
 
-        return beholder.updateMemory(
+        return await beholder.updateMemory(
           symbol,
           index,
           interval,
@@ -189,7 +245,7 @@ function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
     return new Error(`You can't start a Chart Monitor without a symbol`);
   if (!exchange) return new Error("Exchange Monitor not initialized yet!");
 
-  exchange.chartStream(symbol, interval || "1m", (ohlc) => {
+  exchange.chartStream(symbol, interval || "1m", async (ohlc) => {
     lastCandle = {
       open: ohlc.open[ohlc.open.length - 1],
       close: ohlc.close[ohlc.close.length - 1],
@@ -199,11 +255,27 @@ function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
 
     if (logs) console.log(lastCandle);
 
-    beholder.updateMemory(symbol, indexKeys.LAST_CANDLE, interval, lastCandle);
+    let results = await beholder.updateMemory(
+      symbol,
+      indexKeys.LAST_CANDLE,
+      interval,
+      lastCandle
+    );
+
+    if (results)
+      results.filter((r) => r).map((r) => WSS.broadcast({ notification: r }));
 
     if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: lastCandle });
 
-    processChartData(symbol, indexes, interval, ohlc, logs);
+    results = await processChartData(symbol, indexes, interval, ohlc, logs);
+    if (results) {
+      if (logs) {
+        console.log(`chartStram Results: ${results}`);
+      }
+      results.map((r) => WSS.broadcast({ notification: r }));
+    }
+
+    if (logs) console.error(err);
   });
   console.log(`Chart Monitor has started at ${symbol}_${interval}`);
 }
@@ -269,7 +341,13 @@ function startTickerMonitor(symbol, broadcastLabel, logs) {
       newMemory.previous = currentMemory ? currentMemory.current : ticker;
       newMemory.current = ticker;
 
-      beholder.updateMemory(data.symbol, indexKeys.TICKER, null, newMemory);
+      const results = await beholder.updateMemory(
+        data.symbol,
+        indexKeys.TICKER,
+        null,
+        newMemory
+      );
+      if (results) results.map((r) => WSS.broadcast({ notification: r }));
 
       if (WSS && broadcastLabel) WSS.broadcast({ [broadcastLabel]: data });
     } catch (err) {
@@ -326,7 +404,45 @@ async function init(settings, wssInstance, beholderInstance) {
     }, 250); //Binance only permits 5 commands / second
   });
 
+  const lastOrders = await ordersRepository.getLastFilledOrders();
+  await Promise.all(
+    lastOrders.map(async (order) => {
+      const orderCopy = getLightOrder(order.get({ plain: true }));
+      await beholder.updateMemory(
+        order.symbol,
+        indexKeys.LAST_ORDER,
+        null,
+        orderCopy,
+        false
+      );
+      console.log(orderCopy);
+    })
+  );
+
   console.log("App Exchange Monitor is running!");
+}
+
+function getLightOrder(order) {
+  const orderCopy = { ...order };
+  delete orderCopy.id;
+  delete orderCopy.automationId;
+  delete orderCopy.orderId;
+  delete orderCopy.clientOrderId;
+  delete orderCopy.transactTime;
+  delete orderCopy.isMaker;
+  delete orderCopy.commission;
+  delete orderCopy.obs;
+  delete orderCopy.Automation;
+  delete orderCopy.createdAt;
+  delete orderCopy.updatedAt;
+  orderCopy.limitPrice = parseFloat(orderCopy.limitPrice);
+  orderCopy.stopPrice = parseFloat(orderCopy.stopPrice);
+  orderCopy.avgPrice = parseFloat(orderCopy.avgPrice);
+  orderCopy.net = parseFloat(orderCopy.net);
+  orderCopy.quantity = parseFloat(orderCopy.quantity);
+  orderCopy.icebergQuantity = parseFloat(orderCopy.icebergQuantity);
+
+  return orderCopy;
 }
 
 module.exports = {
