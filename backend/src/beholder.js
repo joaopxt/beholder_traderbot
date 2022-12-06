@@ -1,5 +1,8 @@
 const { getDefaultSettings } = require("./repositories/settingsRepository");
 const { actionTypes } = require("./repositories/actionsRepository");
+const orderTemplateRepository = require("./repositories/orderTemplatesRepository");
+const { getSymbol } = require("./repositories/symbolsRepository");
+const { STOP_TYPES, insertOrder } = require("./repositories/ordersRepository");
 
 const MEMORY = {};
 
@@ -69,29 +72,35 @@ async function updateMemory(
 
   if (!executeAutomations) return false;
 
+  const automations = findAutomations(memoryKey);
+
+  if (!automations || !automations.length || LOCK_BRAIN) return false;
+
+  LOCK_BRAIN = true;
+  let results;
+
   try {
-    const automations = findAutomations(memoryKey);
-    if (automations && automations.length > 0 && !LOCK_BRAIN) {
-      LOCK_BRAIN = true;
+    const promises = automations.map(async (auto) => {
+      return evalDecision(auto);
+    });
 
-      const promises = automations.map((auto) => {
-        return evalDecision(auto);
-      });
+    results = await Promise.all(promises);
 
-      let results = await Promise.all(promises);
+    results = results.flat().filter((r) => r);
 
-      results = results.flat().filter((r) => r);
-
-      if (!results || !results.length) {
-        return false;
-      } else {
-        return results;
-      }
+    if (!results || !results.length) {
+      return false;
+    } else {
+      return results;
     }
   } finally {
-    setTimeout(() => {
+    if (results && results.length) {
+      setTimeout(() => {
+        LOCK_BRAIN = false;
+      }, INTERVAL);
+    } else {
       LOCK_BRAIN = false;
-    }, INTERVAL);
+    }
   }
 }
 
@@ -136,11 +145,18 @@ async function sendSms(settings, automation) {
   return { type: "success", text: "SMS Sent" };
 }
 
+function placeOrder(settings, automation, action) {
+  return {
+    type: "success",
+    text: `Order placed from automation ${automation.name}!`,
+  };
+}
+
 function doAction(settings, action, automation) {
   try {
     switch (action.type) {
       case actionTypes.ORDER:
-        return { type: "success", text: "Order placed!" };
+        return placeOrder(settings, automation, action);
       case actionTypes.ALERT_SMS:
         return sendSms(settings, automation);
       case actionTypes.ALERT_EMAIL:
@@ -238,20 +254,25 @@ async function evalDecision(automation) {
   );
   if (!isValid) return false;
 
-  if (LOGS)
+  if (LOGS || automation.logs)
     console.log(
       `Beholder evaluated a condition at automation: ${automation.name}`
     );
 
   if (!automation.actions) {
-    if (LOGS)
+    if (LOGS || automation.logs)
       console.log(`No actions defined for automation ${automation.name}`);
     return false;
   }
 
   const settings = await getDefaultSettings();
-  let results = automation.actions.map((action) => {
-    return doAction(settings, action, automation);
+  let results = automation.actions.map(async (action) => {
+    const result = await doAction(settings, action, automation);
+    if (automation.logs)
+      console.log(
+        `Result for action ${action.type} was ${JSON.stringify(result)}`
+      );
+    return result;
   });
 
   results = await Promise.all(results);
@@ -264,7 +285,7 @@ async function evalDecision(automation) {
 function findAutomations(memoryKey) {
   const ids = BRAIN_INDEX[memoryKey];
   if (!ids) return [];
-  return ids.map((id) => BRAIN[id]);
+  return [...new Set(ids)].map((id) => BRAIN[id]);
 }
 
 function getMemory(symbol, index, interval) {

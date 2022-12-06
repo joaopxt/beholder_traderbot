@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 /**
  * props:
@@ -7,11 +7,17 @@ import React from "react";
  */
 
 function ActionType(props) {
+  const [type, setType] = useState("");
+
+  useEffect(() => {
+    setType(props.type);
+  }, [props.type]);
+
   return (
     <select
       id="type"
       className="form-select"
-      defaultValue={props.type}
+      value={type}
       onChange={props.onChange}
     >
       <option value="ALERT_EMAIL">Alert via Email</option>

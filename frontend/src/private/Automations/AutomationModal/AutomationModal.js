@@ -180,6 +180,7 @@ function AutomationModal(props) {
                 <ActionsArea
                   actions={automation.actions}
                   onChange={onInputChange}
+                  symbol={automation.symbol}
                 />
               </div>
             </div>

@@ -415,7 +415,6 @@ async function init(settings, wssInstance, beholderInstance) {
         orderCopy,
         false
       );
-      console.log(orderCopy);
     })
   );
 
