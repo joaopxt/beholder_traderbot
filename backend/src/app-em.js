@@ -63,7 +63,7 @@ async function startBookMonitor(broadcastLabel, logs) {
     const currentMemory = beholder.getMemory(order.symbol, indexKeys.BOOK);
 
     const newMemory = {};
-    newMemory.previous = currentMemory ? currentMemory.current : null;
+    newMemory.previous = currentMemory ? currentMemory.current : converted;
     newMemory.current = converted;
 
     const results = await beholder.updateMemory(
@@ -151,7 +151,7 @@ function processExecutionData(executionData, broadcastLabel) {
 
   setTimeout(async () => {
     try {
-      const updatedOrder = ordersRepository.updateOrderByOrderId(
+      const updatedOrder = await ordersRepository.updateOrderByOrderId(
         order.orderId,
         order.clientOrderId,
         order
@@ -232,7 +232,7 @@ async function processChartData(symbol, indexes, interval, ohlc, logs) {
           calc.current !== undefined
         );
       } catch (err) {
-        console.error(`Exchange Monitor => Can't calc the indexx ${index}`);
+        console.error(`Exchange Monitor => Can't calc the index ${index}`);
         console.error(err);
         return false;
       }
@@ -255,27 +255,30 @@ function startChartMonitor(symbol, interval, indexes, broadcastLabel, logs) {
 
     if (logs) console.log(lastCandle);
 
-    let results = await beholder.updateMemory(
-      symbol,
-      indexKeys.LAST_CANDLE,
-      interval,
-      lastCandle
-    );
+    try {
+      let results = await beholder.updateMemory(
+        symbol,
+        indexKeys.LAST_CANDLE,
+        interval,
+        lastCandle
+      );
 
-    if (results)
-      results.filter((r) => r).map((r) => WSS.broadcast({ notification: r }));
+      if (results)
+        results.filter((r) => r).map((r) => WSS.broadcast({ notification: r }));
 
-    if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: lastCandle });
+      if (broadcastLabel && WSS)
+        WSS.broadcast({ [broadcastLabel]: lastCandle });
 
-    results = await processChartData(symbol, indexes, interval, ohlc, logs);
-    if (results) {
-      if (logs) {
-        console.log(`chartStram Results: ${results}`);
+      results = await processChartData(symbol, indexes, interval, ohlc, logs);
+      if (results) {
+        if (logs) {
+          console.log(`chartStream Results: ${results}`);
+        }
+        results.map((r) => WSS.broadcast({ notification: r }));
       }
-      results.map((r) => WSS.broadcast({ notification: r }));
+    } catch (err) {
+      if (logs) console.error(err);
     }
-
-    if (logs) console.error(err);
   });
   console.log(`Chart Monitor has started at ${symbol}_${interval}`);
 }

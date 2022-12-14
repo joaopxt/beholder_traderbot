@@ -102,8 +102,11 @@ const STOP_TYPES = [
   "TAKE_PROFIT_LIMIT",
 ];
 
+const LIMIT_TYPES = ["LIMIT", "STOP_LOSS_LIMIT", "TAKE_PROFIT_LIMIT"];
+
 module.exports = {
   STOP_TYPES,
+  LIMIT_TYPES,
   getOrders,
   insertOrder,
   getOrderById,

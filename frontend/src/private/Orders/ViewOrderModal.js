@@ -136,8 +136,8 @@ function ViewOrderModal(props) {
                 </div>
                 {order.automationId ? (
                   <div className="col-md-6 mb-3">
-                    <b>Automation ID:</b>
-                    {order.automationId}
+                    <b>Automation:</b>
+                    {order.automation.name}
                   </div>
                 ) : (
                   <React.Fragment></React.Fragment>
@@ -189,7 +189,7 @@ function ViewOrderModal(props) {
 
                 <div className="col-md-6 mb-3">
                   <b>Avg Price:</b>
-                  {order.type}
+                  {order.avgPrice}
                 </div>
               </div>
               <div className="row">

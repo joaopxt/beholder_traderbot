@@ -914,7 +914,6 @@ function bollingerBands(closes, period = 20, stdDev = 2) {
     stdDev: parseInt(stdDev),
     values: closes,
   });
-
   return {
     current: bbResult[bbResult.length - 1],
     previous: bbResult[bbResult.length - 2],

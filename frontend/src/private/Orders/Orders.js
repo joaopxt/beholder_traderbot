@@ -118,17 +118,16 @@ function Orders() {
           <table className="table table-hover">
             <thead>
               <tr>
-                <th className="border-gray-200">Symbol</th>
+                <th className="border-gray-200">Order</th>
                 <th className="border-gray-200">Date</th>
-                <th className="border-gray-200">Side</th>
                 <th className="border-gray-200">QTY</th>
-                <th className="border-gray-200">Net</th>
+                <th className="border-gray-200">Avg Price</th>
                 <th className="border-gray-200">Status</th>
-                <th className="border-gray-200">Details</th>
+                <th className="border-gray-200">View</th>
               </tr>
             </thead>
             <tbody>
-              {orders ? (
+              {orders && orders.length ? (
                 orders.map((order) => (
                   <OrderRow
                     key={order.clientOrderId}

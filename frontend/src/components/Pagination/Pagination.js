@@ -26,9 +26,31 @@ function Pagination(props) {
     return `${window.location.pathname}?page=${page}`;
   }
 
-  const pagesQty = Math.ceil(props.count / PAGE_SIZE);
+  let pagesQty = Math.ceil(props.count / PAGE_SIZE);
+  pagesQty = pagesQty > 10 ? 10 : pagesQty;
   const pages = [];
   for (let i = 1; i <= pagesQty; i++) pages.push(i);
+
+  function getBottom() {
+    if (props.count > 100)
+      return (
+        <div className="fw-normal small mt-4 mt-lg-0">
+          <b>{props.count}</b> results. First<b>10</b> pages.
+        </div>
+      );
+    else if (props.count)
+      return (
+        <div className="fw-normal small mt-4 mt-lg-0">
+          <b>{props.count} results.</b>
+        </div>
+      );
+    else
+      return (
+        <div className="fw-normal small mt-4 mt-lg-0">
+          <b>No results found.</b> Create one first.
+        </div>
+      );
+  }
 
   return (
     <div className="card-footer px-3 border-0 d-flex flex-column flex-lg-row align-items-center justify-content-between">
@@ -43,9 +65,7 @@ function Pagination(props) {
           ))}
         </ul>
       </nav>
-      <div className="fw-normal small mt-4 mt-lg-0">
-        <b>{props.count} results</b>
-      </div>
+      {getBottom()}
     </div>
   );
 }

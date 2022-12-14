@@ -19,10 +19,6 @@ function MonitorModal(props) {
   const btnClose = useRef("");
   const btnSave = useRef("");
 
-  useEffect(() => {
-    setMonitor(props.data);
-  }, [props.data.id]);
-
   function onSubmit(event) {
     const token = localStorage.getItem("token");
     saveMonitor(monitor.id, monitor, token)
@@ -44,6 +40,10 @@ function MonitorModal(props) {
       [event.target.id]: event.target.value,
     }));
   }
+
+  useEffect(() => {
+    setMonitor(props.data);
+  }, [props.data.id]);
 
   /*function getIntervalClasses(monitorType) {
     return monitorType === "CANDLES" ? "col-md-6 mb-3" : "col-md-6 mb-3 d-none";
@@ -164,7 +164,7 @@ function MonitorModal(props) {
           </div>
           <div className="modal-footer">
             {error ? (
-              <div className="aler alert-danger mt-1 col-9 py-1">{error}</div>
+              <div className="alert alert-danger mt-1 col-9 py-1">{error}</div>
             ) : (
               <React.Fragment></React.Fragment>
             )}

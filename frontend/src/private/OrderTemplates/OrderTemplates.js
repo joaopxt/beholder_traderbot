@@ -123,14 +123,18 @@ function OrderTemplates() {
               </tr>
             </thead>
             <tbody>
-              {orderTemplates.map((ot) => (
-                <OrderTemplateRow
-                  key={ot.id}
-                  data={ot}
-                  onEditClick={onEditOrderTemplateClick}
-                  onDeleteClick={onDeleteOrderTemplateClick}
-                />
-              ))}
+              {orderTemplates && orderTemplates.length ? (
+                orderTemplates.map((ot) => (
+                  <OrderTemplateRow
+                    key={ot.id}
+                    data={ot}
+                    onEditClick={onEditOrderTemplateClick}
+                    onDeleteClick={onDeleteOrderTemplateClick}
+                  />
+                ))
+              ) : (
+                <React.Fragment></React.Fragment>
+              )}
             </tbody>
           </table>
           <Pagination count={count} />

@@ -158,16 +158,20 @@ function Automations() {
               </tr>
             </thead>
             <tbody>
-              {automations.map((automation) => (
-                <AutomationRow
-                  key={automation.id}
-                  data={automation}
-                  onEditClick={onEditAutomationClick}
-                  onStopClick={onStopAutomationClick}
-                  onStartClick={onStartAutomationClick}
-                  onDeleteClick={onDeleteAutomationClick}
-                />
-              ))}
+              {automations && automations.length ? (
+                automations.map((automation) => (
+                  <AutomationRow
+                    key={automation.id}
+                    data={automation}
+                    onEditClick={onEditAutomationClick}
+                    onStopClick={onStopAutomationClick}
+                    onStartClick={onStartAutomationClick}
+                    onDeleteClick={onDeleteAutomationClick}
+                  />
+                ))
+              ) : (
+                <React.Fragment></React.Fragment>
+              )}
             </tbody>
           </table>
           <Pagination count={count} />
