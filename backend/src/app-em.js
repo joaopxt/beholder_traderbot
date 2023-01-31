@@ -13,24 +13,48 @@ function startMiniTickerMonitor(broadcastLabel, logs) {
   exchange.miniTickerStream(async (markets) => {
     if (logs) console.log(markets);
 
-    Object.entries(markets).map(async (mkt) => {
-      delete mkt[1].volume;
-      delete mkt[1].quoteVolume;
-      delete mkt[1].eventTime;
-      const converted = {};
-      Object.entries(mkt[1]).map(
-        (prop) => (converted[prop[0]] = parseFloat(prop[1]))
-      );
-      const results = await beholder.updateMemory(
-        mkt[0],
-        indexKeys.MINI_TICKER,
-        null,
-        converted
-      );
-      if (results) results.map((r) => WSS.broadcast({ notification: r }));
-    });
+    try {
+      Object.entries(markets).map(async (mkt) => {
+        delete mkt[1].volume;
+        delete mkt[1].quoteVolume;
+        delete mkt[1].eventTime;
+        const converted = {};
+        Object.entries(mkt[1]).map(
+          (prop) => (converted[prop[0]] = parseFloat(prop[1]))
+        );
+        const results = await beholder.updateMemory(
+          mkt[0],
+          indexKeys.MINI_TICKER,
+          null,
+          converted
+        );
+        if (results) results.map((r) => WSS.broadcast({ notification: r }));
+      });
+      if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: markets });
 
-    if (broadcastLabel && WSS) WSS.broadcast({ [broadcastLabel]: markets });
+      const books = Object.entries(markets).map((mkt) => {
+        const book = {
+          symbol: mkt[0],
+          bestAsk: mkt[1].close,
+          bestBid: mkt[1].close,
+        };
+        const currentMemory = beholder.getMemory(mkt[0], indexKeys.BOOK);
+
+        const newMemory = {};
+        newMemory.previous = currentMemory ? currentMemory.current : book;
+        newMemory.current = book;
+
+        beholder
+          .updateMemory(mkt[0], indexKeys.BOOK, null, newMemory)
+          .then((results) => {
+            if (results) results.map((r) => WSS.broadcast({ notification: r }));
+          });
+        return book;
+      });
+      if (WSS) WSS.broadcast({ book: books });
+    } catch (err) {
+      console.err(err);
+    }
   });
   console.log(`MiniTicker Monitor has started at ${broadcastLabel}`);
 }
